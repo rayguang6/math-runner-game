@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Runner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #2980b9;
+            --secondary-color: #3498db;
+            --accent-color: #f39c12;
+            --bg-color: #1a1a2e;
+            --ui-bg-color: rgba(26, 26, 46, 0.85);
+            --text-color: #ecf0f1;
+            --track-color1: #2ecc71;
+            --track-color2: #27ae60;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: var(--text-color);
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 600px;
+            overflow: hidden;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        canvas {
+            background-color: var(--bg-color);
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(to bottom, var(--ui-bg-color), transparent);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            font-family: 'Orbitron', sans-serif;
+            z-index: 10;
+        }
+        
+        .ui-item {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .ui-item i {
+            margin-right: 5px;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, rgba(26, 26, 46, 0.9), rgba(40, 40, 80, 0.95));
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            gap: 15px;
+            z-index: 20;
+            display: none;
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+            border-radius: 16px;
+        }
+        
+        #game-over h2 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+        
+        #game-over .stats {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px 40px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        button {
+            font-family: 'Orbitron', sans-serif;
+            padding: 12px 30px;
+            font-size: 18px;
+            background: linear-gradient(to bottom, #4CAF50, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+            outline: none;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.6);
+            background: linear-gradient(to bottom, #2ecc71, #27ae60);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            user-select: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        }
+        
+        #jump-btn {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(243, 156, 18, 0.5), rgba(230, 126, 34, 0.3));
+        }
+        
+        #loading-message {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+            color: white;
+            transform: translateY(-50%);
+            z-index: 5;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        #loading-container {
+            width: 200px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 20px auto;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #f39c12, #e74c3c);
+            animation: loading 2s linear forwards;
+            border-radius: 10px;
+        }
+        
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .glow {
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px var(--accent-color), 0 0 20px var(--accent-color); }
+            to { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px var(--accent-color), 0 0 40px var(--accent-color); }
+        }
+        
+        /* Icons */
+        .icon {
+            display: inline-block;
+            vertical-align: middle;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+        
+        .icon-heart {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e74c3c'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+        }
+        
+        .icon-coin {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f1c40f'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z'/%3E%3C/svg%3E");
+        }
+        
+        .icon-distance {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232ecc71'%3E%3Cpath d='M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z'/%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="loading-message">
+            <div class="glow">LOADING GAME</div>
+            <div id="loading-container">
+                <div id="loading-bar"></div>
+            </div>
+        </div>
+        <div id="ui">
+            <div class="ui-item"><span class="icon icon-heart"></span> <span id="lives">10</span></div>
+            <div class="ui-item"><span class="icon icon-coin"></span> <span id="coins">0</span></div>
+            <div class="ui-item"><span class="icon icon-distance"></span> <span id="distance">0</span>m</div>
+        </div>
+        <div id="game-over">
+            <h2>GAME OVER</h2>
+            <div class="stats">
+                <div>Distance: <span id="final-distance">0</span>m</div>
+                <div>Coins: <span id="final-coins">0</span></div>
+            </div>
+            <button id="restart-button">PLAY AGAIN</button>
+        </div>
+        <div id="controls">
+            <div id="left-btn" class="control-btn">←</div>
+            <div id="jump-btn" class="control-btn">↑</div>
+            <div id="right-btn" class="control-btn">→</div>
+        </div>
+    </div>
+    
+    <script>
+        // Game variables
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverElement = document.getElementById('game-over');
+        const loadingMessageElement = document.getElementById('loading-message');
+        
+        console.log("Game initialization started");
+        
+        // Add motion blur effect to the canvas
+        let lastFrame = null;
+        function applyMotionBlur() {
+            if (!lastFrame) {
+                lastFrame = document.createElement('canvas');
+                lastFrame.width = canvas.width;
+                lastFrame.height = canvas.height;
+            }
+            
+            // Draw the last frame with reduced opacity
+            const blurCtx = lastFrame.getContext('2d');
+            blurCtx.globalAlpha = 0.4; // Increased from 0.3 for more pronounced blur
+            blurCtx.drawImage(canvas, 0, 0);
+            
+            // Apply the blur at the start of each frame
+            ctx.globalAlpha = 0.4; // Increased from 0.3
+            ctx.drawImage(lastFrame, 0, 0);
+            ctx.globalAlpha = 1.0;
+        }
+        
+        // Set canvas size to match container
+        function resizeCanvas() {
+            try {
+                const container = document.getElementById('game-container');
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                groundY = canvas.height * 0.78; // Position ground at 78% of canvas height
+                console.log(`Canvas resized: ${canvas.width}x${canvas.height}, groundY: ${groundY}`);
+                
+                // Update lane width after resize
+                LANE_WIDTH = canvas.width / LANE_COUNT;
+                
+                // Reset motion blur canvas
+                lastFrame = null;
+            } catch (error) {
+                console.error("Error resizing canvas:", error);
+            }
+        }
+        
+        // Initial resize
+        resizeCanvas();
+        
+        // Handle window resizing
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Game state
+        let gameActive = true;
+        let distance = 0;
+        let lives = 10;
+        let coins = 0;
+        let speed = 5; // Increased base speed from 3 to 5
+        let groundY = canvas.height * 0.78;
+        let questionActive = false;
+        let currentQuestion = null;
+        let nextQuestionDistance = 400; // MODIFIED: reduced from 800 to 400 for earlier first question
+        
+        // Question cards
+        let questionCards = [];
+        
+        // Lane setup
+        const LANE_COUNT = 3;
+        let LANE_WIDTH = canvas.width / LANE_COUNT;
+        
+        // Player properties
+        const player = {
+            x: canvas.width / 2,
+            y: groundY,
+            width: 30,
+            height: 50,
+            velocityY: 0,
+            jumping: false,
+            lane: 1, // 0 = left, 1 = center, 2 = right
+            runCycle: 0, // For running animation
+            runSpeed: 0.15, // Animation speed
+            leanAmount: 0, // For leaning during lane changes
+            trail: [], // For motion trail effect
+            speedLines: [], // For speed line effects
+            
+            update: function() {
+                // Handle jumping
+                if (this.jumping) {
+                    this.velocityY += 0.8; // Gravity
+                    this.y += this.velocityY;
+                    
+                    if (this.y >= groundY) {
+                        this.y = groundY;
+                        this.jumping = false;
+                        this.velocityY = 0;
+                        
+                        // Add dust particles when landing
+                        particles.addParticles(
+                            this.x,
+                            groundY,
+                            8,
+                            '#7f8c8d',
+                            3,
+                            2
+                        );
+                    }
+                } else {
+                    // Update running animation when on ground
+                    this.runCycle += this.runSpeed * (speed / 5); // Scale animation with game speed
+                    if (this.runCycle > Math.PI * 2) {
+                        this.runCycle -= Math.PI * 2;
+                    }
+                }
+                
+                // Save position for trail effect
+                if (gameActive && speed > 0) {
+                    if (this.trail.length > 5) {
+                        this.trail.shift();
+                    }
+                    
+                    if (this.trail.length === 0 || 
+                        Math.abs(this.x - this.trail[this.trail.length - 1].x) > 5 ||
+                        Math.abs(this.y - this.trail[this.trail.length - 1].y) > 5) {
+                        this.trail.push({
+                            x: this.x,
+                            y: this.y,
+                            lane: this.lane,
+                            jumping: this.jumping,
+                            runCycle: this.runCycle,
+                            alpha: 0.7,
+                            time: Date.now()
+                        });
+                    }
+                }
+                
+                // Update trail alpha
+                for (let i = 0; i < this.trail.length; i++) {
+                    this.trail[i].alpha -= 0.02;
+                }
+                
+                // Remove old trail points
+                this.trail = this.trail.filter(point => point.alpha > 0);
+                
+                // Generate speed lines for faster movement
+                if (gameActive && speed > 4 && Math.random() < 0.2) {
+                    // Calculate current lane center
+                    let laneX;
+                    const laneWidth = canvas.width / LANE_COUNT;
+                    
+                    if (this.lane === 0) laneX = laneWidth / 2;
+                    else if (this.lane === 1) laneX = laneWidth + laneWidth / 2;
+                    else laneX = laneWidth * 2 + laneWidth / 2;
+                    
+                    // Add speed lines on both sides of the player
+                    const sideOffset = 20 + Math.random() * 30;
+                    const lineLength = 30 + Math.random() * 40;
+                    const side = Math.random() < 0.5 ? -1 : 1;
+                    
+                    this.speedLines.push({
+                        x: this.x + (side * sideOffset),
+                        y: this.y - this.height/2 - 10 + Math.random() * this.height,
+                        length: lineLength,
+                        alpha: 0.7,
+                        width: 1 + Math.random() * 2
+                    });
+                }
+                
+                // Update speed lines
+                for (let i = 0; i < this.speedLines.length; i++) {
+                    this.speedLines[i].alpha -= 0.1;
+                }
+                
+                // Remove faded speed lines
+                this.speedLines = this.speedLines.filter(line => line.alpha > 0);
+            },
+            
+            draw: function() {
+                try {
+                    // First draw motion trail
+                    for (let i = 0; i < this.trail.length; i++) {
+                        const point = this.trail[i];
+                        
+                        // Calculate x position based on lane of this trail point
+                        let trailX;
+                        const laneWidth = canvas.width / LANE_COUNT;
+                        
+                        if (point.lane === 0) trailX = laneWidth / 2;
+                        else if (point.lane === 1) trailX = laneWidth + laneWidth / 2;
+                        else trailX = laneWidth * 2 + laneWidth / 2;
+                        
+                        // Draw ghost of the player
+                        ctx.globalAlpha = point.alpha * 0.3;
+                        
+                        // Draw simplified player shape
+                        const gradient = ctx.createLinearGradient(
+                            trailX - this.width / 2, 
+                            point.y - this.height, 
+                            trailX + this.width / 2, 
+                            point.y
+                        );
+                        gradient.addColorStop(0, '#3498db80');
+                        gradient.addColorStop(1, '#2980b980');
+                        
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(trailX - this.width / 2, point.y - this.height, this.width, this.height);
+                    }
+                    
+                    // Reset alpha
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Draw speed lines
+                    for (let i = 0; i < this.speedLines.length; i++) {
+                        const line = this.speedLines[i];
+                        
+                        ctx.globalAlpha = line.alpha;
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = line.width;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(line.x, line.y);
+                        ctx.lineTo(line.x - line.length, line.y);
+                        ctx.stroke();
+                    }
+                    
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Calculate x position based on lane
+                    let targetX;
+                    const laneWidth = canvas.width / LANE_COUNT;
+                    
+                    if (this.lane === 0) targetX = laneWidth / 2;
+                    else if (this.lane === 1) targetX = laneWidth + laneWidth / 2;
+                    else targetX = laneWidth * 2 + laneWidth / 2;
+                    
+                    // Smoothly move to target x
+                    this.x += (targetX - this.x) * 0.2;
+                    
+                    // Apply skew transform for leaning effect
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.transform(1, 0, this.leanAmount, 1, 0, 0); // Apply skew
+                    ctx.translate(-this.x, -this.y);
+                    
+                    // Draw player shadow
+                    const shadowWidth = this.width * (this.jumping ? 0.7 : 1.2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.beginPath();
+                    ctx.ellipse(this.x, groundY + 2, shadowWidth / 2, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Calculate leg positions based on run cycle
+                    const legOffset = this.jumping ? 0 : Math.sin(this.runCycle) * 8;
+                    const legSpread = this.jumping ? 5 : 10 + Math.abs(Math.cos(this.runCycle) * 8);
+                    
+                    // Draw legs
+                    ctx.fillStyle = '#1a5276';
+                    
+                    // Left leg
+                    ctx.fillRect(
+                        this.x - 10, 
+                        this.y - 22 + legOffset, 
+                        7, 
+                        22 - legOffset
+                    );
+                    
+                    // Right leg
+                    ctx.fillRect(
+                        this.x + 3, 
+                        this.y - 22 - legOffset, 
+                        7, 
+                        22 + legOffset
+                    );
+                    
+                    // Draw body with gradient
+                    const gradient = ctx.createLinearGradient(
+                        this.x - this.width / 2, 
+                        this.y - this.height, 
+                        this.x + this.width / 2, 
+                        this.y - 20
+                    );
+                    gradient.addColorStop(0, '#3498db');
+                    gradient.addColorStop(1, '#2980b9');
+                    
+                    // Body
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height - 20);
+                    
+                    // Draw outline
+                    ctx.strokeStyle = '#1a5276';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x - this.width / 2, this.y - this.height, this.width, this.height - 20);
+                    
+                    // Draw arms
+                    const armOffset = this.jumping ? 0 : -Math.sin(this.runCycle) * 8;
+                    
+                    // Left arm
+                    ctx.fillStyle = '#2980b9';
+                    ctx.fillRect(
+                        this.x - this.width / 2 - 7, 
+                        this.y - this.height + 10 + armOffset, 
+                        7, 
+                        18
+                    );
+                    
+                    // Right arm
+                    ctx.fillRect(
+                        this.x + this.width / 2, 
+                        this.y - this.height + 10 - armOffset, 
+                        7, 
+                        18
+                    );
+                    
+                    // Draw face
+                    // Head (slightly bobbing with run cycle)
+                    const headBob = this.jumping ? 0 : Math.sin(this.runCycle * 2) * 2;
+                    
+                    // Eyes
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(this.x - 8, this.y - this.height + 15 + headBob, 5, 0, Math.PI * 2);
+                    ctx.arc(this.x + 8, this.y - this.height + 15 + headBob, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(this.x - 8, this.y - this.height + 15 + headBob, 2, 0, Math.PI * 2);
+                    ctx.arc(this.x + 8, this.y - this.height + 15 + headBob, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw mouth - smile if jumping, neutral otherwise
+                    ctx.beginPath();
+                    if (this.jumping) {
+                        ctx.arc(this.x, this.y - this.height + 30 + headBob, 8, 0, Math.PI, false);
+                    } else {
+                        ctx.arc(this.x, this.y - this.height + 30 + headBob, 8, 0.1, Math.PI - 0.1, false);
+                    }
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#000';
+                    ctx.stroke();
+                    
+                    // Add a motion blur effect when moving fast
+                    if (speed > 4 && !this.jumping) {
+                        ctx.globalAlpha = 0.3;
+                        const blurGradient = ctx.createLinearGradient(
+                            this.x - 20, this.y - this.height/2,
+                            this.x, this.y - this.height/2
+                        );
+                        blurGradient.addColorStop(0, 'rgba(52, 152, 219, 0)');
+                        blurGradient.addColorStop(1, 'rgba(52, 152, 219, 0.7)');
+                        
+                        ctx.fillStyle = blurGradient;
+                        ctx.fillRect(this.x - 25, this.y - this.height, 25, this.height);
+                        ctx.globalAlpha = 1.0;
+                    }
+                    
+                    // Restore context to remove skew
+                    ctx.restore();
+                } catch (error) {
+                    console.error("Error drawing player:", error);
+                }
+            },
+            
+            jump: function() {
+                if (!this.jumping && !questionActive) {
+                    console.log("Player jumped");
+                    this.jumping = true;
+                    this.velocityY = -15;
+                    
+                    // Add dust particles when jumping
+                    particles.addParticles(
+                        this.x, 
+                        groundY, 
+                        10, 
+                        '#7f8c8d', 
+                        4, 
+                        2
+                    );
+                }
+            },
+            
+            moveLeft: function() {
+                if (!questionActive && this.lane > 0) {
+                    console.log(`Player moved left to lane ${this.lane - 1}`);
+                    this.leanAmount = -0.2; // Lean left during movement
+                    this.lane--;
+                    
+                    // Add motion blur effect
+                    particles.addParticles(
+                        this.x + 10, 
+                        this.y - this.height/2, 
+                        5, 
+                        '#3498db', 
+                        3, 
+                        2
+                    );
+                    
+                    // Reset lean amount after a delay
+                    setTimeout(() => {
+                        this.leanAmount = 0;
+                    }, 200);
+                } else if (questionActive && currentQuestionCard && 
+                          !currentQuestionCard.showingFeedback && 
+                          currentQuestionCard.answerable) { // Only allow answering when question is close enough
+                    // Answer left for question, only if not already showing feedback
+                    console.log("Selected left answer");
+                    checkAnswer(0);
+                }
+            },
+            
+            moveRight: function() {
+                if (!questionActive && this.lane < 2) {
+                    console.log(`Player moved right to lane ${this.lane + 1}`);
+                    this.leanAmount = 0.2; // Lean right during movement
+                    this.lane++;
+                    
+                    // Add motion blur effect
+                    particles.addParticles(
+                        this.x - 10, 
+                        this.y - this.height/2, 
+                        5, 
+                        '#3498db', 
+                        3, 
+                        2
+                    );
+                    
+                    // Reset lean amount after a delay
+                    setTimeout(() => {
+                        this.leanAmount = 0;
+                    }, 200);
+                } else if (questionActive && currentQuestionCard && 
+                          !currentQuestionCard.showingFeedback && 
+                          currentQuestionCard.answerable) { // Only allow answering when question is close enough
+                    // Answer right for question, only if not already showing feedback
+                    console.log("Selected right answer");
+                    checkAnswer(1);
+                }
+            }
+        };
+        
+        // Track for 3D effect
+        let trackSegments = [];
+        const SEGMENT_LENGTH = 30; // Shorter segments for smoother track
+        const TRACK_SEGMENTS = 40; // More segments for longer track
+        const PERSPECTIVE = 500; // Increased perspective for longer view distance
+        const TRACK_FADE_DISTANCE = 2000; // How far the track extends
+        
+        // Initialize track segments
+        function initTrack() {
+            trackSegments = [];
+            for (let i = 0; i < TRACK_SEGMENTS; i++) {
+                trackSegments.push({
+                    z: i * SEGMENT_LENGTH,
+                    y: groundY,
+                    color1: i % 2 === 0 ? '#2ecc71' : '#27ae60',
+                    color2: i % 2 === 0 ? '#3ee683' : '#33d675'
+                });
+            }
+            console.log(`Track initialized with ${trackSegments.length} segments`);
+        }
+        
+        // Update track segments
+        function updateTrack() {
+            for (let i = 0; i < trackSegments.length; i++) {
+                trackSegments[i].z -= speed;
+                
+                // If segment moves off screen, move it to the back
+                if (trackSegments[i].z < 0) {
+                    trackSegments[i].z = (trackSegments.length - 1) * SEGMENT_LENGTH;
+                }
+            }
+        }
+        
+        // Enhanced track drawing with more dynamic movement effects
+        function drawTrack() {
+            try {
+                // Create a more dramatic vanishing point
+                const vanishingPoint = canvas.height * 0.5;
+                
+                // Add perspective lines that converge at the vanishing point
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                
+                // Draw converging perspective lines
+                for (let i = 0; i < 5; i++) {
+                    const spacing = canvas.width * 0.1 * (i + 1);
+                    
+                    // Left perspective lines
+                    ctx.beginPath();
+                    ctx.moveTo(canvas.width/2 - spacing, groundY);
+                    ctx.lineTo(canvas.width/2, vanishingPoint);
+                    ctx.stroke();
+                    
+                    // Right perspective lines
+                    ctx.beginPath();
+                    ctx.moveTo(canvas.width/2 + spacing, groundY);
+                    ctx.lineTo(canvas.width/2, vanishingPoint);
+                    ctx.stroke();
+                }
+                
+                // Draw a unified track path with more dynamic gradient
+                const trackGradient = ctx.createLinearGradient(0, vanishingPoint, 0, groundY);
+                trackGradient.addColorStop(0, 'rgba(46, 204, 113, 0.1)');
+                trackGradient.addColorStop(0.3, 'rgba(46, 204, 113, 0.4)');
+                trackGradient.addColorStop(0.7, 'rgba(46, 204, 113, 0.7)');
+                trackGradient.addColorStop(1, '#2ecc71');
+                
+                // Draw the main track body
+                ctx.fillStyle = trackGradient;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2 - canvas.width * 0.1, vanishingPoint); // Left point at horizon
+                ctx.lineTo(canvas.width/2 + canvas.width * 0.1, vanishingPoint); // Right point at horizon
+                ctx.lineTo(canvas.width/2 + canvas.width * 0.4, groundY); // Bottom right
+                ctx.lineTo(canvas.width/2 - canvas.width * 0.4, groundY); // Bottom left
+                ctx.closePath();
+                ctx.fill();
+                
+                // Draw track sides with enhanced shadow effect
+                const sideGradient = ctx.createLinearGradient(0, vanishingPoint, 0, groundY);
+                sideGradient.addColorStop(0, 'rgba(22, 61, 43, 0.3)');
+                sideGradient.addColorStop(1, '#163d2b');
+                
+                ctx.fillStyle = sideGradient;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2 - canvas.width * 0.4, groundY);
+                ctx.lineTo(canvas.width/2 - canvas.width * 0.1, vanishingPoint);
+                ctx.lineTo(canvas.width/2 - canvas.width * 0.1, vanishingPoint + 30);
+                ctx.lineTo(canvas.width/2 - canvas.width * 0.4, groundY + 20);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2 + canvas.width * 0.4, groundY);
+                ctx.lineTo(canvas.width/2 + canvas.width * 0.1, vanishingPoint);
+                ctx.lineTo(canvas.width/2 + canvas.width * 0.1, vanishingPoint + 30);
+                ctx.lineTo(canvas.width/2 + canvas.width * 0.4, groundY + 20);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Draw lane dividers with improved perspective
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([10, 10]);
+                
+                // Left lane divider
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2 - canvas.width * 0.1/3, vanishingPoint);
+                ctx.lineTo(canvas.width/2 - canvas.width * 0.4/3, groundY);
+                ctx.stroke();
+                
+                // Right lane divider
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2 + canvas.width * 0.1/3, vanishingPoint);
+                ctx.lineTo(canvas.width/2 + canvas.width * 0.4/3, groundY);
+                ctx.stroke();
+                
+                // Clear the line dash pattern
+                ctx.setLineDash([]);
+                
+                // Enhanced moving horizontal track segments
+                const segmentCount = 25; // More segments for smoother motion (increased from 15)
+                const animationOffset = (Date.now() / 100) % 1; // Faster animation (from 150ms to 100ms)
+                
+                // Draw segments from far to near for proper layering
+                for (let i = 0; i < segmentCount; i++) {
+                    // Calculate progress along the track (0 at horizon, 1 at player)
+                    let progress = (i / segmentCount + animationOffset) % 1;
+                    
+                    // Use easing function to make segments move faster as they get closer
+                    const easedProgress = Math.pow(progress, 1.3);
+                    
+                    // Calculate segment position and dimensions
+                    const y = vanishingPoint + (groundY - vanishingPoint) * easedProgress;
+                    const leftEdgeX = canvas.width/2 - canvas.width * 0.1 - (canvas.width * 0.3) * easedProgress;
+                    const rightEdgeX = canvas.width/2 + canvas.width * 0.1 + (canvas.width * 0.3) * easedProgress;
+                    const width = rightEdgeX - leftEdgeX;
+                    
+                    // Segments get thicker as they get closer
+                    const height = 1 + 4 * easedProgress;
+                    
+                    // Calculate alpha that creates a subtle pattern
+                    // Increase visibility as segments get closer
+                    const segmentAlpha = 0.06 + (easedProgress * 0.25);
+                    
+                    // Apply segment style
+                    ctx.fillStyle = `rgba(255, 255, 255, ${segmentAlpha})`;
+                    
+                    // Draw the segment as a thin rectangle
+                    ctx.fillRect(leftEdgeX, y, width, height);
+                }
+                
+                // Add road markings like arrows pointing forward
+                const roadMarkingCount = 5;
+                const markingOffset = (Date.now() / 800) % 1; // Slower than lines but still moving
+                
+                for (let i = 0; i < roadMarkingCount; i++) {
+                    let markingProgress = (i / roadMarkingCount + markingOffset) % 1;
+                    
+                    // Make markings appear further down the road and move toward player
+                    if (markingProgress < 0.1 || markingProgress > 0.9) continue; // Don't draw at extremes
+                    
+                    // Position the marking based on progress
+                    const y = vanishingPoint + (groundY - vanishingPoint) * markingProgress;
+                    
+                    // Scale marking based on distance
+                    const scale = markingProgress;
+                    const arrowSize = 20 * scale;
+                    
+                    // Calculate x position (center of road)
+                    const x = canvas.width / 2;
+                    
+                    // Draw arrow pointing forward
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - arrowSize);
+                    ctx.lineTo(x + arrowSize/2, y);
+                    ctx.lineTo(x - arrowSize/2, y);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Draw arrow shaft
+                    ctx.fillRect(x - arrowSize/6, y, arrowSize/3, arrowSize);
+                }
+                
+                // Add distance markers on the side of the road
+                const markerCount = 8;
+                const markerOffset = (Date.now() / 1500) % 1;
+                
+                for (let i = 0; i < markerCount; i++) {
+                    let markerProgress = (i / markerCount + markerOffset) % 1;
+                    
+                    // Skip markers too close or too far
+                    if (markerProgress < 0.1 || markerProgress > 0.9) continue;
+                    
+                    // Position the marker based on progress
+                    const y = vanishingPoint + (groundY - vanishingPoint) * markerProgress;
+                    
+                    // Scale marker based on distance
+                    const scale = markerProgress;
+                    const markerSize = 10 * scale;
+                    
+                    // Calculate x positions (on both sides of road)
+                    const leftX = canvas.width/2 - canvas.width * 0.1 - (canvas.width * 0.3) * markerProgress - markerSize;
+                    const rightX = canvas.width/2 + canvas.width * 0.1 + (canvas.width * 0.3) * markerProgress + markerSize;
+                    
+                    // Draw left marker
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+                    ctx.fillRect(leftX - markerSize, y - markerSize/2, markerSize, markerSize);
+                    
+                    // Draw right marker
+                    ctx.fillRect(rightX, y - markerSize/2, markerSize, markerSize);
+                }
+                
+                // Add motion streaks at the edges of the track for speed effect
+                const streakCount = 6; // Increased from 4
+                const streakTime = (Date.now() / 60) % 1; // Very fast animation (faster than before)
+                
+                // Left side streaks
+                ctx.beginPath();
+                for (let i = 0; i < streakCount; i++) {
+                    const streakProgress = (i / streakCount + streakTime) % 1;
+                    const streakLength = 70 * streakProgress; // Longer streaks (from 50 to 70)
+                    const streakY = vanishingPoint + (groundY - vanishingPoint) * streakProgress;
+                    const streakX = canvas.width/2 - canvas.width * 0.1 - (canvas.width * 0.3) * streakProgress;
+                    
+                    ctx.moveTo(streakX, streakY);
+                    ctx.lineTo(streakX - streakLength, streakY);
+                }
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; // Slightly more visible
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Right side streaks
+                ctx.beginPath();
+                for (let i = 0; i < streakCount; i++) {
+                    const streakProgress = (i / streakCount + streakTime) % 1;
+                    const streakLength = 70 * streakProgress;
+                    const streakY = vanishingPoint + (groundY - vanishingPoint) * streakProgress;
+                    const streakX = canvas.width/2 + canvas.width * 0.1 + (canvas.width * 0.3) * streakProgress;
+                    
+                    ctx.moveTo(streakX, streakY);
+                    ctx.lineTo(streakX + streakLength, streakY);
+                }
+                ctx.stroke();
+                
+                // Add dust particles at the track edges (more frequently)
+                if (Math.random() < 0.5) { // Increased probability from 0.3 to 0.5
+                    const side = Math.random() < 0.5 ? -1 : 1;
+                    const xPos = canvas.width/2 + side * (canvas.width * 0.3 + Math.random() * 20);
+                    const yPos = groundY - Math.random() * 20;
+                    
+                    particles.addParticles(
+                        xPos,
+                        yPos,
+                        3,
+                        'rgba(255, 255, 255, 0.3)',
+                        2,
+                        1
+                    );
+                }
+                
+                ctx.globalAlpha = 1.0;
+            } catch (error) {
+                console.error("Error drawing track:", error);
+            }
+        }
+        
+        // Background elements
+        let backgroundElements = [];
+        
+        // Initialize background with fewer trees that approach along the road
+        function initBackground() {
+            backgroundElements = [];
+            
+            // Stars (fewer stars)
+            for (let i = 0; i < 30; i++) {
+                const z = Math.random() * 3000;
+                const x = (Math.random() - 0.5) * 1500;
+                const y = Math.random() * 150 - 250;
+                
+                backgroundElements.push({
+                    x: x,
+                    y: y,
+                    z: z,
+                    size: 2 + Math.random() * 3,
+                    color: '#ffffff',
+                    type: 'star',
+                    twinkle: Math.random() * Math.PI * 2,
+                    twinkleSpeed: 0.05 + Math.random() * 0.1
+                });
+            }
+            
+            // Buildings (just a few in the distance)
+            for (let i = 0; i < 5; i++) {
+                const z = 1500 + Math.random() * 1500; // Further away
+                const x = (Math.random() - 0.5) * 1500;
+                const y = Math.random() * 150 - 250;
+                const colorIndex = Math.floor(Math.random() * 3);
+                const color = colorIndex === 0 ? '#2c3e50' : (colorIndex === 1 ? '#34495e' : '#1a2530');
+                
+                backgroundElements.push({
+                    x: x,
+                    y: y,
+                    z: z,
+                    size: 30 + Math.random() * 70,
+                    color: color,
+                    type: 'building',
+                    width: 15 + Math.random() * 30,
+                    height: 50 + Math.random() * 100
+                });
+            }
+            
+            // More carefully define track edge positions
+            const vanishingPoint = canvas.height * 0.5;
+            const leftTrackEdgeAtHorizon = canvas.width/2 - canvas.width * 0.1;
+            const rightTrackEdgeAtHorizon = canvas.width/2 + canvas.width * 0.1;
+            const leftTrackEdgeAtGround = canvas.width/2 - canvas.width * 0.4;
+            const rightTrackEdgeAtGround = canvas.width/2 + canvas.width * 0.4;
+            
+            // Calculate the ground y-coordinate
+            const groundYCoordinate = groundY;
+            
+            // Create fewer trees spread out along the track edges
+            // Left side trees
+            for (let i = 0; i < 10; i++) {
+                const z = 300 + i * 300; // Space them out evenly further down the track
+                
+                // Calculate where the track edge is at this z position
+                const trackProgress = z / 3000;
+                const edgeX = leftTrackEdgeAtGround + (leftTrackEdgeAtHorizon - leftTrackEdgeAtGround) * trackProgress;
+                
+                // Position trees at the track edge
+                const offsetFromEdge = 10 + Math.random() * 10;
+                const x = edgeX - offsetFromEdge;
+                
+                // Position at ground level with perspective
+                const y = groundYCoordinate - (groundYCoordinate - vanishingPoint) * trackProgress;
+                
+                // Vary tree colors
+                const colorVariations = ['#2ecc71', '#27ae60', '#16a085'];
+                const color = colorVariations[Math.floor(Math.random() * colorVariations.length)];
+                
+                // Trees get smaller in the distance
+                const sizeVariation = 1 - (z / 4000);
+                const size = (15 + Math.random() * 15) * sizeVariation;
+                
+                backgroundElements.push({
+                    x: x,
+                    y: y,
+                    z: z,
+                    size: size,
+                    color: color,
+                    type: 'tree'
+                });
+            }
+            
+            // Right side trees
+            for (let i = 0; i < 10; i++) {
+                const z = 300 + i * 300; // Space them out evenly
+                
+                // Calculate where the track edge is at this z position
+                const trackProgress = z / 3000;
+                const edgeX = rightTrackEdgeAtGround + (rightTrackEdgeAtHorizon - rightTrackEdgeAtGround) * trackProgress;
+                
+                // Position trees at the track edge
+                const offsetFromEdge = 10 + Math.random() * 10;
+                const x = edgeX + offsetFromEdge;
+                
+                // Position at ground level with perspective
+                const y = groundYCoordinate - (groundYCoordinate - vanishingPoint) * trackProgress;
+                
+                // Vary tree colors
+                const colorVariations = ['#2ecc71', '#27ae60', '#16a085'];
+                const color = colorVariations[Math.floor(Math.random() * colorVariations.length)];
+                
+                // Trees get smaller in the distance
+                const sizeVariation = 1 - (z / 4000);
+                const size = (15 + Math.random() * 15) * sizeVariation;
+                
+                backgroundElements.push({
+                    x: x,
+                    y: y,
+                    z: z,
+                    size: size,
+                    color: color,
+                    type: 'tree'
+                });
+            }
+            
+            console.log(`Background initialized with ${backgroundElements.length} elements`);
+        }
+        
+        // Update background elements with enhanced movement
+        function updateBackground() {
+            for (let i = 0; i < backgroundElements.length; i++) {
+                const element = backgroundElements[i];
+                
+                // Enhanced movement - vary speed based on distance and game speed
+                const speedFactor = 1 + (speed / 10); // Increase speed variation with game speed
+                
+                if (element.type === 'star') {
+                    element.z -= speed * 0.12 * speedFactor; // Stars move slightly faster
+                    
+                    // Add slight horizontal drift to stars for more dynamic feel
+                    element.x += Math.sin(Date.now() / 5000 + i) * 0.2;
+                } else if (element.type === 'building') {
+                    element.z -= speed * 0.35 * speedFactor; // Buildings move faster
+                } else if (element.type === 'tree') {
+                    // Trees move at full speed with slight variations for more natural look
+                    const treeSpeedVariation = 0.9 + Math.sin(Date.now() / 1000 + i * 0.1) * 0.1;
+                    element.z -= speed * treeSpeedVariation;
+                    
+                    // Update tree position as it approaches
+                    if (element.z < 0) {
+                        // When tree passes player, reset it far away
+                        element.z = 2800 + Math.random() * 200;
+                        
+                        // Recalculate its position at the track edge
+                        const vanishingPoint = canvas.height * 0.5;
+                        const trackProgress = element.z / 3000;
+                        
+                        // Keep it on the same side (x < 0 means left side)
+                        if (element.x < 0) {
+                            const leftTrackEdgeAtHorizon = canvas.width/2 - canvas.width * 0.1;
+                            const leftTrackEdgeAtGround = canvas.width/2 - canvas.width * 0.4;
+                            const edgeX = leftTrackEdgeAtGround + (leftTrackEdgeAtHorizon - leftTrackEdgeAtGround) * trackProgress;
+                            element.x = edgeX - (10 + Math.random() * 10);
+                            
+                            // Add replacement particles when a tree is reset
+                            if (Math.random() < 0.5) {
+                                particles.addParticles(
+                                    canvas.width/2 - canvas.width * 0.4,
+                                    groundY,
+                                    3,
+                                    '#27ae60',
+                                    2,
+                                    1
+                                );
+                            }
+                        } else {
+                            const rightTrackEdgeAtHorizon = canvas.width/2 + canvas.width * 0.1;
+                            const rightTrackEdgeAtGround = canvas.width/2 + canvas.width * 0.4;
+                            const edgeX = rightTrackEdgeAtGround + (rightTrackEdgeAtHorizon - rightTrackEdgeAtGround) * trackProgress;
+                            element.x = edgeX + (10 + Math.random() * 10);
+                            
+                            // Add replacement particles when a tree is reset
+                            if (Math.random() < 0.5) {
+                                particles.addParticles(
+                                    canvas.width/2 + canvas.width * 0.4,
+                                    groundY,
+                                    3,
+                                    '#27ae60',
+                                    2,
+                                    1
+                                );
+                            }
+                        }
+                        
+                        // Update y position and size
+                        element.y = groundY - (groundY - vanishingPoint) * trackProgress;
+                        const sizeVariation = 1 - (element.z / 4000);
+                        element.size = (15 + Math.random() * 15) * sizeVariation;
+                    }
+                }
+                
+                // Update star twinkle effect
+                if (element.type === 'star' && element.twinkle !== undefined) {
+                    element.twinkle += element.twinkleSpeed * speedFactor; // Twinkle faster with higher speed
+                }
+                
+                // If element moves off screen, reset it
+                if (element.z < 1 && element.type !== 'tree') {
+                    element.z = 3000;
+                    element.x = (Math.random() - 0.5) * 1500;
+                    element.y = Math.random() * 150 - 250;
+                }
+            }
+        }
+        
+        // Draw background elements with perspective
+        function drawBackground() {
+            try {
+                // Sort background elements by z-distance for proper drawing order
+                backgroundElements.sort((a, b) => b.z - a.z);
+                
+                for (let element of backgroundElements) {
+                    // Calculate perspective scale
+                    const scale = PERSPECTIVE / (PERSPECTIVE + element.z);
+                    
+                    // Convert 3D position to screen coordinates
+                    const screenX = canvas.width / 2 + element.x * scale;
+                    const screenY = canvas.height / 2 + element.y * scale;
+                    const screenSize = element.size * scale;
+                    
+                    // Only draw if on screen
+                    if (screenX > -screenSize && screenX < canvas.width + screenSize &&
+                        screenY > -screenSize && screenY < canvas.height + screenSize) {
+                        
+                        if (element.type === 'star') {
+                            // Draw star with twinkle effect
+                            const brightness = 0.3 + Math.abs(Math.sin(element.twinkle)) * 0.7;
+                            ctx.fillStyle = `rgba(255, 255, 255, ${brightness * scale})`;
+                            ctx.beginPath();
+                            ctx.arc(screenX, screenY, screenSize * brightness, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Add glow for brighter stars
+                            if (brightness > 0.7 && screenSize > 1.5) {
+                                ctx.globalAlpha = brightness * 0.3 * scale;
+                                ctx.beginPath();
+                                ctx.arc(screenX, screenY, screenSize * 2, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.globalAlpha = 1.0;
+                            }
+                        } else if (element.type === 'building') {
+                            // Draw buildings (rectangular with windows)
+                            const width = element.width * scale;
+                            const height = element.height * scale;
+                            
+                            // Building silhouette
+                            ctx.fillStyle = element.color;
+                            ctx.globalAlpha = 0.8 * scale;
+                            ctx.fillRect(screenX - width/2, screenY - height, width, height);
+                            
+                            // Windows
+                            ctx.fillStyle = 'rgba(255, 255, 100, 0.7)';
+                            ctx.globalAlpha = 0.5 * scale;
+                            
+                            // Add random windows
+                            for (let i = 0; i < 5; i++) {
+                                const windowSize = 3 * scale;
+                                const windowX = screenX - width/2 + width * Math.random();
+                                const windowY = screenY - height + height * Math.random();
+                                ctx.fillRect(windowX, windowY, windowSize, windowSize);
+                            }
+                            
+                            ctx.globalAlpha = 1.0;
+                        } else if (element.type === 'tree') {
+                            // Increase opacity based on proximity for better distance effect
+                            const opacityFactor = Math.min(1, 0.4 + (1 - element.z / 3000) * 0.6);
+                            ctx.globalAlpha = opacityFactor * scale;
+                            
+                            // Tree trunk with gradient - make it thinner and taller when closer
+                            const trunkWidth = (scale < 0.3) ? screenSize/5 : screenSize/4;
+                            const trunkHeight = (scale < 0.3) ? screenSize/1.1 : screenSize/1.2;
+                            
+                            const trunkGradient = ctx.createLinearGradient(
+                                screenX - trunkWidth, screenY, 
+                                screenX + trunkWidth, screenY
+                            );
+                            trunkGradient.addColorStop(0, '#5D4037');
+                            trunkGradient.addColorStop(0.5, '#795548');
+                            trunkGradient.addColorStop(1, '#5D4037');
+                            
+                            ctx.fillStyle = trunkGradient;
+                            ctx.fillRect(
+                                screenX - trunkWidth/2, 
+                                screenY - trunkHeight, 
+                                trunkWidth, 
+                                trunkHeight
+                            );
+                            
+                            // Draw tree top as a more stylized shape based on distance
+                            // More detailed when close, simpler when far
+                            if (scale > 0.4) {
+                                // Close tree - draw detailed 3D-like tree with multiple layers
+                                const treeLayers = 3;
+                                for (let i = 0; i < treeLayers; i++) {
+                                    const layerSize = screenSize * (1 - i * 0.2);
+                                    const layerY = screenY - trunkHeight - (layerSize * 0.3 * i);
+                                    
+                                    // Adjust color based on layer for more depth
+                                    const colorShade = i === 0 ? element.color : 
+                                                      (i === 1 ? adjustColor(element.color, -20) : 
+                                                       adjustColor(element.color, -40));
+                                    
+                                    ctx.fillStyle = colorShade;
+                                    
+                                    // Draw more rounded tree top
+                                    ctx.beginPath();
+                                    ctx.moveTo(screenX - layerSize/2, layerY);
+                                    ctx.lineTo(screenX + layerSize/2, layerY);
+                                    ctx.lineTo(screenX, layerY - layerSize);
+                                    ctx.closePath();
+                                    ctx.fill();
+                                }
+                                
+                                // Add tree shadow on ground
+                                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                                ctx.beginPath();
+                                ctx.ellipse(screenX, screenY + 5, screenSize/2, screenSize/8, 0, 0, Math.PI * 2);
+                                ctx.fill();
+                            } else {
+                                // Distant tree - simpler shape
+                                const treeTopSize = screenSize * 1.2;
+                                ctx.fillStyle = element.color;
+                                
+                                // Simple triangle for distant trees
+                                ctx.beginPath();
+                                ctx.moveTo(screenX - treeTopSize/2, screenY - trunkHeight);
+                                ctx.lineTo(screenX + treeTopSize/2, screenY - trunkHeight);
+                                ctx.lineTo(screenX, screenY - trunkHeight - treeTopSize);
+                                ctx.closePath();
+                                ctx.fill();
+                            }
+                            
+                            // Add "swoosh" effect as tree passes by when very close
+                            if (element.z < 100 && scale > 0.7) {
+                                const swooshGradient = ctx.createLinearGradient(
+                                    screenX - screenSize, screenY - trunkHeight/2,
+                                    screenX, screenY - trunkHeight/2
+                                );
+                                swooshGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+                                swooshGradient.addColorStop(1, 'rgba(255, 255, 255, 0.2)');
+                                
+                                ctx.fillStyle = swooshGradient;
+                                ctx.beginPath();
+                                ctx.moveTo(screenX - screenSize, screenY - trunkHeight/2);
+                                ctx.lineTo(screenX, screenY - trunkHeight/2);
+                                ctx.lineTo(screenX, screenY - trunkHeight/4);
+                                ctx.lineTo(screenX - screenSize, screenY - trunkHeight/2 - 10);
+                                ctx.closePath();
+                                ctx.fill();
+                            }
+                            
+                            ctx.globalAlpha = 1.0;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error drawing background:", error);
+            }
+        }
+        
+        // Draw sky gradient
+        function drawSky() {
+            try {
+                // Create a gradient from dark at top to slightly lighter at horizon
+                const gradient = ctx.createLinearGradient(0, 0, 0, groundY);
+                gradient.addColorStop(0, '#0a0a1a'); // Darker at top
+                gradient.addColorStop(0.5, '#16213e');
+                gradient.addColorStop(1, '#0f3460');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, groundY);
+                
+                // Draw a subtle glow at the horizon
+                const horizonGlow = ctx.createLinearGradient(0, groundY - 80, 0, groundY);
+                horizonGlow.addColorStop(0, 'rgba(15, 52, 96, 0)');
+                horizonGlow.addColorStop(1, 'rgba(15, 52, 96, 0.4)');
+                
+                ctx.fillStyle = horizonGlow;
+                ctx.fillRect(0, groundY - 80, canvas.width, 80);
+                
+                // Add subtle moving clouds
+                const cloudCount = 3;
+                const cloudTime = Date.now() / 10000; // Very slow movement
+                
+                for (let i = 0; i < cloudCount; i++) {
+                    const cloudProgress = (i / cloudCount + cloudTime) % 1;
+                    const cloudX = canvas.width * cloudProgress;
+                    const cloudY = 50 + i * 40;
+                    const cloudWidth = 120 + i * 30;
+                    const cloudHeight = 20 + i * 5;
+                    
+                    // Draw subtle cloud
+                    const cloudGradient = ctx.createRadialGradient(
+                        cloudX, cloudY, 0,
+                        cloudX, cloudY, cloudWidth / 2
+                    );
+                    cloudGradient.addColorStop(0, 'rgba(30, 60, 90, 0.2)');
+                    cloudGradient.addColorStop(1, 'rgba(30, 60, 90, 0)');
+                    
+                    ctx.fillStyle = cloudGradient;
+                    ctx.beginPath();
+                    ctx.ellipse(cloudX, cloudY, cloudWidth / 2, cloudHeight / 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Add occasional shooting stars
+                if (Math.random() < 0.01) {
+                    const starX = Math.random() * canvas.width;
+                    const starY = Math.random() * (groundY / 2);
+                    const angle = Math.PI / 4 + Math.random() * (Math.PI / 4);
+                    const length = 50 + Math.random() * 100;
+                    
+                    // Create a trail gradient
+                    const trailGradient = ctx.createLinearGradient(
+                        starX, starY,
+                        starX - Math.cos(angle) * length,
+                        starY + Math.sin(angle) * length
+                    );
+                    trailGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+                    trailGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    
+                    ctx.strokeStyle = trailGradient;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(starX, starY);
+                    ctx.lineTo(
+                        starX - Math.cos(angle) * length,
+                        starY + Math.sin(angle) * length
+                    );
+                    ctx.stroke();
+                }
+            } catch (error) {
+                console.error("Error drawing sky:", error);
+            }
+        }
+        
+        // Question cards
+        class QuestionCard {
+            constructor(question, answers, correctIndex) {
+                this.question = question;
+                this.answers = answers;
+                this.correctIndex = correctIndex;
+                
+                // Initialize card position at the horizon (vanishing point)
+                const vanishingPoint = canvas.height * 0.5;
+                
+                // Start far down the track with very small size
+                this.z = 2000; // Start far away
+                this.x = canvas.width / 2; // Center horizontally
+                this.y = vanishingPoint; // Start at horizon line
+                
+                // Card standard dimensions when at full size
+                this.baseWidth = canvas.width * 0.8;
+                this.baseHeight = 200;
+                
+                this.active = true;
+                this.selectedIndex = -1;
+                this.feedbackTimer = 0;
+                this.shakeAmount = 0;
+                this.showingFeedback = false;
+                this.correct = false;
+                this.sparkles = [];
+                this.answerable = false; // Flag to determine if question can be answered
+                
+                // Generate sparkles
+                for (let i = 0; i < 10; i++) {
+                    this.sparkles.push({
+                        x: Math.random() * this.baseWidth - this.baseWidth/2,
+                        y: Math.random() * this.baseHeight - this.baseHeight/2,
+                        size: Math.random() * 3 + 1,
+                        speed: Math.random() * 0.2 + 0.1,
+                        opacity: Math.random() * 0.5 + 0.2,
+                        angle: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+            
+            update() {
+                // Update sparkles
+                for (let sparkle of this.sparkles) {
+                    sparkle.angle += sparkle.speed;
+                    sparkle.opacity = 0.2 + Math.sin(sparkle.angle) * 0.3;
+                }
+                
+                if (this.showingFeedback) {
+                    this.feedbackTimer -= 1;
+                    
+                    if (this.feedbackTimer <= 0) {
+                        questionActive = false;
+                        currentQuestionCard = null;
+                        // Restore speed to normal when question is done
+                        speed = speed / 0.5; // MODIFIED: changed from 0.4 to 0.5 for less slowdown
+                    }
+                    
+                    if (!this.correct) {
+                        this.shakeAmount = Math.random() * 10 - 5;
+                    }
+                } else {
+                    // Move the card toward the player along the track
+                    this.z -= speed * 8; // MODIFIED: Increased from 5 to 8 for faster approach
+                    
+                    // Calculate position based on perspective
+                    const groundYCoordinate = groundY;
+                    const vanishingPoint = canvas.height * 0.5;
+                    
+                    // Update y position - move from horizon to final position
+                    const targetY = canvas.height / 2 - 50; // Final y position at player
+                    
+                    // Calculate progress (0 = far away, 1 = at player)
+                    const progressToPlayer = Math.max(0, Math.min(1, 1 - (this.z / 2000)));
+                    
+                    // Move along path from horizon to target position
+                    this.y = vanishingPoint + (targetY - vanishingPoint) * progressToPlayer;
+                    
+                    // Determine if the question is close enough to be answered
+                    // Only allow answering when the card is very close (last 15% of approach)
+                    this.answerable = this.z <= 400;
+                    
+                    // Stop when close enough to player
+                    if (this.z <= 200) {
+                        this.z = 200;
+                    }
+                }
+            }
+            
+            draw() {
+                try {
+                    // Calculate card scale based on z position
+                    const scale = Math.max(0.1, Math.min(1, 1 - (this.z / 2200)));
+                    
+                    // Calculate actual card dimensions based on scale
+                    const width = this.baseWidth * scale;
+                    const height = this.baseHeight * scale;
+                    
+                    // Calculate card position with shake effect if wrong
+                    const offsetX = Math.sin(Date.now() / 200) * 2 * scale; // Subtle movement
+                    const cardX = this.x - width / 2 + offsetX + (this.showingFeedback && !this.correct ? this.shakeAmount : 0);
+                    
+                    // Don't draw if too far away (too small to be visible)
+                    if (scale < 0.1) return;
+                    
+                    // Card shadow effect (stronger when closer)
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                    ctx.shadowBlur = 20 * scale;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 10 * scale;
+                    
+                    // Draw sparkles around card
+                    for (let sparkle of this.sparkles) {
+                        ctx.fillStyle = `rgba(255, 255, 255, ${sparkle.opacity * scale})`;
+                        ctx.beginPath();
+                        const sparkleX = cardX + width/2 + sparkle.x * scale + Math.sin(sparkle.angle) * 10 * scale;
+                        const sparkleY = this.y + height/2 + sparkle.y * scale + Math.cos(sparkle.angle) * 5 * scale;
+                        ctx.arc(sparkleX, sparkleY, sparkle.size * scale, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Draw card background with gradient
+                    const gradient = ctx.createLinearGradient(cardX, this.y, cardX + width, this.y + height);
+                    gradient.addColorStop(0, '#2c3e50');
+                    gradient.addColorStop(1, '#34495e');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.roundRect(cardX, this.y, width, height, 15 * scale);
+                    ctx.fill();
+                    
+                    // Card border with glow effect
+                    const borderColor = this.showingFeedback ? 
+                        (this.correct ? '#2ecc71' : '#e74c3c') : 
+                        '#3498db';
+                    
+                    ctx.strokeStyle = borderColor;
+                    ctx.lineWidth = 4 * scale;
+                    ctx.stroke();
+                    
+                    // Add subtle glow effect
+                    ctx.shadowColor = borderColor;
+                    ctx.shadowBlur = 10 * scale;
+                    ctx.strokeStyle = `${borderColor}80`; // 50% opacity
+                    ctx.lineWidth = 6 * scale;
+                    ctx.stroke();
+                    
+                    // Reset shadow
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    
+                    // Scale the font based on the card's size
+                    const fontSize = Math.max(8, 24 * scale);
+                    
+                    // Only draw text if the card is large enough to be readable
+                    if (scale > 0.2) {
+                        // Draw question with slight movement to enhance speed effect
+                        ctx.font = `bold ${fontSize}px Orbitron`;
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = '#fff';
+                        ctx.fillText(this.question, this.x + offsetX * 0.8, this.y + 40 * scale);
+                        
+                        // Draw separator
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.lineWidth = 2 * scale;
+                        ctx.beginPath();
+                        ctx.moveTo(cardX + 20 * scale, this.y + 60 * scale);
+                        ctx.lineTo(cardX + width - 20 * scale, this.y + 60 * scale);
+                        ctx.stroke();
+                        
+                        // Draw answer choices only when close enough to be answered
+                        if (this.answerable) {
+                            const answerY = this.y + 100 * scale;
+                            const answerWidth = width / 2 - 30 * scale;
+                            const answerHeight = 60 * scale;
+                            
+                            for (let i = 0; i < this.answers.length; i++) {
+                                // Position answers side by side with slight movement effect
+                                const answerOffsetX = offsetX * (i === 0 ? 0.6 : 1.2) * scale;
+                                const answerX = i === 0 ? cardX + 20 * scale + answerOffsetX : cardX + width - 20 * scale - answerWidth + answerOffsetX;
+                                
+                                // Determine colors based on state
+                                let bgColor, textColor, borderColor;
+                                
+                                if (this.showingFeedback) {
+                                    if (i === this.correctIndex) {
+                                        bgColor = 'rgba(46, 204, 113, 0.7)';
+                                        borderColor = '#27ae60';
+                                        textColor = '#fff';
+                                    } else if (i === this.selectedIndex && i !== this.correctIndex) {
+                                        bgColor = 'rgba(231, 76, 60, 0.7)';
+                                        borderColor = '#c0392b';
+                                        textColor = '#fff';
+                                    } else {
+                                        bgColor = 'rgba(52, 73, 94, 0.7)';
+                                        borderColor = '#2c3e50';
+                                        textColor = '#bdc3c7';
+                                    }
+                                } else {
+                                    bgColor = 'rgba(52, 152, 219, 0.2)';
+                                    borderColor = '#3498db';
+                                    textColor = '#fff';
+                                }
+                                
+                                // Draw answer button
+                                ctx.fillStyle = bgColor;
+                                ctx.strokeStyle = borderColor;
+                                ctx.lineWidth = 2 * scale;
+                                
+                                ctx.beginPath();
+                                ctx.roundRect(answerX, answerY, answerWidth, answerHeight, 10 * scale);
+                                ctx.fill();
+                                ctx.stroke();
+                                
+                                // Draw answer text
+                                ctx.font = `${fontSize * 0.8}px Orbitron`;
+                                ctx.fillStyle = textColor;
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(this.answers[i], answerX + answerWidth / 2, answerY + answerHeight / 2);
+                            }
+                        } else if (scale > 0.4) {
+                            // Show "Get ready" message when card is visible but not yet answerable
+                            ctx.font = `${fontSize * 0.8}px Orbitron`;
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText("Get ready to answer...", this.x, this.y + 100 * scale);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error drawing question card:", error);
+                }
+            }
+            
+            showFeedback(selectedIndex) {
+                if (this.showingFeedback) return this.correct;
+                
+                console.log("Showing feedback for answer:", selectedIndex);
+                this.selectedIndex = selectedIndex;
+                this.showingFeedback = true;
+                this.correct = (selectedIndex === this.correctIndex);
+                this.feedbackTimer = 30; // MODIFIED: reduced from 60 to 30 frames for quicker disappearing
+                
+                console.log("Answer was", this.correct ? "correct" : "incorrect");
+                return this.correct;
+            }
+        }
+        
+        // Obstacles and coins
+        class GameObject {
+            constructor(type, lane) {
+                this.type = type; // 'obstacle' or 'coin'
+                this.lane = lane;
+                this.z = 1000; // Start far away
+                this.width = 30;
+                this.height = 30;
+                this.collected = false;
+                this.rotation = 0;
+                this.floatOffset = 0;
+                this.floatSpeed = Math.random() * 0.05 + 0.02;
+            }
+            
+            update() {
+                this.z -= speed;
+                
+                // Update rotation and floating effect for coins
+                if (this.type === 'coin') {
+                    this.rotation += 0.05;
+                    this.floatOffset += this.floatSpeed;
+                }
+                
+                // Fix collision detection with better boundaries
+                // Check collision with player only when object is close enough
+                if (!this.collected && this.z < 60 && this.z > 0) {
+                    if (this.lane === player.lane) {
+                        // For obstacles, add additional check for jump height
+                        if (this.type === 'obstacle') {
+                            if (!player.jumping) {
+                                // Player is on ground and can collide
+                                lives--;
+                                document.getElementById('lives').textContent = lives;
+                                console.log(`Hit obstacle! Lives remaining: ${lives}`);
+                                this.collected = true; // Mark as hit to prevent multiple collisions
+                                
+                                if (lives <= 0) {
+                                    endGame();
+                                }
+                            } else if (player.y > groundY - 20) {
+                                // Player is jumping but not high enough
+                                lives--;
+                                document.getElementById('lives').textContent = lives;
+                                console.log(`Hit obstacle while jumping too low! Lives remaining: ${lives}`);
+                                this.collected = true; // Mark as hit to prevent multiple collisions
+                                
+                                if (lives <= 0) {
+                                    endGame();
+                                }
+                            }
+                        } else if (this.type === 'coin') {
+                            this.collected = true;
+                            coins++;
+                            document.getElementById('coins').textContent = coins;
+                            console.log(`Coin collected! Total: ${coins}`);
+                        }
+                    }
+                }
+                
+                return this.z > -100 && !this.collected;
+            }
+            
+            draw() {
+                try {
+                    // Calculate perspective scale
+                    const scale = PERSPECTIVE / (PERSPECTIVE + this.z);
+                    
+                    // Calculate screen position
+                    let screenX;
+                    const laneWidth = canvas.width / LANE_COUNT;
+                    
+                    if (this.lane === 0) screenX = laneWidth / 2;
+                    else if (this.lane === 1) screenX = laneWidth + laneWidth / 2;
+                    else screenX = laneWidth * 2 + laneWidth / 2;
+                    
+                    const screenY = groundY - 20 * scale;
+                    const screenWidth = this.width * scale;
+                    const screenHeight = this.height * scale;
+                    
+                    if (this.type === 'coin') {
+                        // Add floating effect
+                        const floatY = Math.sin(this.floatOffset) * 10 * scale;
+                        
+                        // Draw coin with glowing effect
+                        ctx.save();
+                        ctx.translate(screenX, screenY + floatY);
+                        ctx.rotate(this.rotation);
+                        
+                        // Shadow and glow
+                        ctx.shadowColor = '#f39c12';
+                        ctx.shadowBlur = 10 * scale;
+                        
+                        // Coin shape
+                        const coinWidth = screenWidth * Math.abs(Math.cos(this.rotation));
+                        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, screenWidth/1.5);
+                        gradient.addColorStop(0, '#f1c40f');
+                        gradient.addColorStop(0.7, '#f39c12');
+                        gradient.addColorStop(1, '#d35400');
+                        
+                        ctx.fillStyle = gradient;
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, coinWidth, screenHeight/1.5, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Coin details - $ symbol
+                        if (scale > 0.5) {
+                            ctx.fillStyle = '#d35400';
+                            ctx.font = `bold ${16 * scale}px Roboto`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('$', 0, 0);
+                        }
+                        
+                        ctx.restore();
+                    } else if (this.type === 'obstacle') {
+                        // Draw obstacle (rock)
+                        const rockGradient = ctx.createLinearGradient(
+                            screenX - screenWidth/2, screenY - screenHeight,
+                            screenX + screenWidth/2, screenY
+                        );
+                        rockGradient.addColorStop(0, '#7f8c8d');
+                        rockGradient.addColorStop(0.5, '#95a5a6');
+                        rockGradient.addColorStop(1, '#7f8c8d');
+                        
+                        ctx.fillStyle = rockGradient;
+                        ctx.beginPath();
+                        
+                        // Irregular rock shape
+                        ctx.moveTo(screenX - screenWidth/2, screenY);
+                        ctx.lineTo(screenX - screenWidth/2, screenY - screenHeight * 0.7);
+                        ctx.lineTo(screenX - screenWidth/4, screenY - screenHeight * 0.9);
+                        ctx.lineTo(screenX, screenY - screenHeight);
+                        ctx.lineTo(screenX + screenWidth/4, screenY - screenHeight * 0.9);
+                        ctx.lineTo(screenX + screenWidth/2, screenY - screenHeight * 0.7);
+                        ctx.lineTo(screenX + screenWidth/2, screenY);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Add rock details (cracks)
+                        ctx.strokeStyle = '#5d6d7e';
+                        ctx.lineWidth = 1 * scale;
+                        ctx.beginPath();
+                        ctx.moveTo(screenX - screenWidth/4, screenY - screenHeight * 0.4);
+                        ctx.lineTo(screenX + screenWidth/5, screenY - screenHeight * 0.6);
+                        ctx.stroke();
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(screenX + screenWidth/6, screenY - screenHeight * 0.3);
+                        ctx.lineTo(screenX - screenWidth/5, screenY - screenHeight * 0.7);
+                        ctx.stroke();
+                    }
+                } catch (error) {
+                    console.error("Error drawing game object:", error);
+                }
+            }
+        }
+        
+        // Game objects (obstacles and coins)
+        let gameObjects = [];
+        let nextObjectDistance = 100;
+        // Using the existing nextQuestionDistance from above
+        
+        // Generate questions
+        function generateQuestion() {
+            console.log("Generating new question");
+            const operations = ['+', '-', '×'];
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            
+            let num1, num2, answer;
+            
+            if (operation === '+') {
+                num1 = Math.floor(Math.random() * 20) + 1;
+                num2 = Math.floor(Math.random() * 20) + 1;
+                answer = num1 + num2;
+            } else if (operation === '-') {
+                num1 = Math.floor(Math.random() * 20) + 10;
+                num2 = Math.floor(Math.random() * 10) + 1;
+                answer = num1 - num2;
+            } else { // multiplication
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
+                answer = num1 * num2;
+            }
+            
+            const question = `${num1} ${operation} ${num2} = ?`;
+            
+            // Generate a wrong answer that's close to the correct one
+            let wrongAnswer;
+            do {
+                wrongAnswer = answer + Math.floor(Math.random() * 5) + 1;
+                if (Math.random() < 0.5) wrongAnswer = answer - Math.floor(Math.random() * 5) - 1;
+            } while (wrongAnswer === answer || wrongAnswer < 0);
+            
+            // Randomize answer positions
+            let answers, correctIndex;
+            if (Math.random() < 0.5) {
+                answers = [answer.toString(), wrongAnswer.toString()];
+                correctIndex = 0;
+            } else {
+                answers = [wrongAnswer.toString(), answer.toString()];
+                correctIndex = 1;
+            }
+            
+            return {
+                question,
+                answers,
+                correctIndex
+            };
+        }
+        
+        // Present a question
+        function presentQuestion() {
+            if (questionActive) return;
+            
+            questionActive = true;
+            const questionData = generateQuestion();
+            currentQuestionCard = new QuestionCard(
+                questionData.question,
+                questionData.answers,
+                questionData.correctIndex
+            );
+            
+            // Slow down the game but don't stop it completely
+            speed = speed * 0.5; // MODIFIED: changed from 0.4 to 0.5 for less slowdown
+            console.log("Question presented, speed reduced to:", speed);
+        }
+        
+        // Initialize game objects
+        function initGameObjects() {
+            // Reset arrays
+            obstacles = [];
+            coins = [];
+            trackSegments = [];
+            gameObjects = [];
+            
+            // Reset game state
+            score = 0;
+            distance = 0;
+            speed = 5; // Increased base speed from 3 to 5
+            
+            // Reset timing variables
+            nextObjectDistance = 100;
+            nextQuestionDistance = 400; // MODIFIED: reduced from 800 to 400 to match the initial value
+            
+            // Create main track
+            initTrack();
+            
+            // Initialize background elements
+            initBackground();
+            
+            console.log("Game objects initialized");
+        }
+        
+        // Update game objects
+        function updateGameObjects() {
+            try {
+                // Debug information about current game state
+                console.log(`Current distance: ${Math.floor(distance)}, nextQuestionDistance: ${Math.floor(nextQuestionDistance)}, questionActive: ${questionActive}`);
+                
+                // Update obstacles and coins
+                for (let i = gameObjects.length - 1; i >= 0; i--) {
+                    // If update returns false, remove the object
+                    if (!gameObjects[i].update()) {
+                        gameObjects.splice(i, 1);
+                    }
+                }
+                
+                // Update question card if it exists
+                if (currentQuestionCard) {
+                    // Print info about current question
+                    console.log("Current question:", currentQuestionCard.question);
+                    console.log("Question z position:", currentQuestionCard.z);
+                    
+                    // Update logic for question card
+                    const stillActive = currentQuestionCard.update();
+                    
+                    // If the update returns false or is undefined, the card is done
+                    if (stillActive === false) {
+                        console.log("Question card removed");
+                        currentQuestionCard = null;
+                        questionActive = false;
+                    }
+                }
+                
+                // Generate new objects - only if no question is active
+                if (!questionActive && nextObjectDistance <= 0) {
+                    // Randomly decide what to spawn
+                    if (Math.random() < 0.3) {
+                        // Spawn obstacle
+                        const lane = Math.floor(Math.random() * LANE_COUNT);
+                        gameObjects.push(new GameObject('obstacle', lane));
+                        console.log("Spawned obstacle in lane", lane);
+                    } else {
+                        // Spawn coin
+                        const lane = Math.floor(Math.random() * LANE_COUNT);
+                        gameObjects.push(new GameObject('coin', lane));
+                        console.log("Spawned coin in lane", lane);
+                    }
+                    
+                    nextObjectDistance = 100 + Math.random() * 100;
+                }
+                
+                // Generate questions based on distance
+                if (!questionActive && distance > nextQuestionDistance) {
+                    console.log(`Distance ${Math.floor(distance)} reached threshold ${Math.floor(nextQuestionDistance)}, presenting question`);
+                    
+                    // Force speed to be reasonable
+                    if (speed > 10) speed = 10;
+                    
+                    // Present a question
+                    questionActive = true;
+                    const questionData = generateQuestion();
+                    
+                    // Create the question card
+                    currentQuestionCard = new QuestionCard(
+                        questionData.question,
+                        questionData.answers,
+                        questionData.correctIndex
+                    );
+                    
+                    // Add return value to the update method if it doesn't exist
+                    if (typeof currentQuestionCard.update() === 'undefined') {
+                        console.log("Fixed update method for QuestionCard");
+                        QuestionCard.prototype.update = function() {
+                            // Update sparkles
+                            for (let sparkle of this.sparkles) {
+                                sparkle.angle += sparkle.speed;
+                                sparkle.opacity = 0.2 + Math.sin(sparkle.angle) * 0.3;
+                            }
+                            
+                            if (this.showingFeedback) {
+                                this.feedbackTimer -= 1;
+                                
+                                if (this.feedbackTimer <= 0) {
+                                    console.log("Feedback timer ended, removing question");
+                                    questionActive = false;
+                                    // Restore speed to normal when question is done
+                                    speed = speed / 0.5; // MODIFIED: changed from 0.4 to 0.5 to match the slowdown factor
+                                    return false; // Return false to indicate the card should be removed
+                                }
+                                
+                                if (!this.correct) {
+                                    this.shakeAmount = Math.random() * 10 - 5;
+                                }
+                            } else {
+                                // Move the card toward the player along the track
+                                this.z -= speed * 5; // Move faster than the road to catch up
+                                
+                                // Calculate position based on perspective
+                                const vanishingPoint = canvas.height * 0.5;
+                                
+                                // Update y position - move from horizon to final position
+                                const targetY = canvas.height / 2 - 50; // Final y position at player
+                                
+                                // Calculate progress (0 = far away, 1 = at player)
+                                const progressToPlayer = Math.max(0, Math.min(1, 1 - (this.z / 2000)));
+                                
+                                // Move along path from horizon to target position
+                                this.y = vanishingPoint + (targetY - vanishingPoint) * progressToPlayer;
+                                
+                                // Determine if the question is close enough to be answered
+                                this.answerable = this.z <= 400;
+                                
+                                // Stop when close enough to player
+                                if (this.z <= 200) {
+                                    this.z = 200;
+                                }
+                            }
+                            
+                            return true; // Return true to keep the card active
+                        };
+                    }
+                    
+                    // Slow down the game but don't stop it completely
+                    speed = speed * 0.5; // MODIFIED: changed from 0.4 to 0.5 for less slowdown
+                    console.log("Question presented, speed reduced to:", speed);
+                    
+                    // Set distance for next question - MODIFIED: reduced distance between questions
+                    nextQuestionDistance = distance + 600 + Math.random() * 400; // was 1200 + Math.random() * 800
+                    console.log("Next question will appear at distance:", Math.floor(nextQuestionDistance));
+                }
+                
+                // Check for inconsistent state
+                if (questionActive && !currentQuestionCard) {
+                    console.error("Question is active but no question card exists! Resetting state.");
+                    questionActive = false;
+                    // Set next question to appear soon
+                    nextQuestionDistance = distance + 200;
+                }
+                
+                // Always decrease distance counters, even with question active
+                nextObjectDistance -= speed;
+                
+                // Update distance
+                if (gameActive) {
+                    if (!questionActive) {
+                        distance += speed;
+                    } else {
+                        // Move more slowly during questions
+                        distance += speed * 0.5;
+                    }
+                }
+            } catch (error) {
+                console.error("Error updating game objects:", error);
+            }
+        }
+        
+        // Draw game objects
+        function drawGameObjects() {
+            try {
+                // Draw all game objects
+                gameObjects.forEach(obj => obj.draw());
+                
+                // Draw current question card
+                if (currentQuestionCard) {
+                    currentQuestionCard.draw();
+                }
+            } catch (error) {
+                console.error("Error drawing game objects:", error);
+            }
+        }
+        
+        // Update game stats
+        function updateStats() {
+            if (gameActive) {
+                // Always update distance, even during questions, just at slower rate if question is active
+                distance += speed / 10;
+                document.getElementById('distance').textContent = Math.floor(distance);
+                
+                // Increase speed more gradually, but only when not answering questions
+                if (!questionActive && speed < 12 && Math.floor(distance) % 800 === 0 && Math.floor(distance) > 0) {
+                    speed += 0.3; // Reduced from 0.5 to 0.3
+                    console.log(`Speed increased to ${speed}`);
+                }
+            }
+        }
+        
+        // End game function
+        function endGame() {
+            console.log("Game over!");
+            gameActive = false;
+            
+            // Update final stats
+            document.getElementById('final-distance').textContent = Math.floor(distance);
+            document.getElementById('final-coins').textContent = coins;
+            
+            // Show game over screen with fade-in effect
+            gameOverElement.style.display = 'flex';
+        }
+        
+        // Restart game function
+        function restartGame() {
+            console.log("Restarting game");
+            
+            // Reset game variables
+            gameActive = true;
+            distance = 0;
+            lives = 10;
+            coins = 0;
+            speed = 5; // MODIFIED: changed from 3 to 5 to match initial game speed
+            questionActive = false;
+            currentQuestionCard = null;
+            
+            // Update UI
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('coins').textContent = coins;
+            document.getElementById('distance').textContent = '0';
+            
+            // Reset player
+            player.lane = 1;
+            player.jumping = false;
+            player.y = groundY;
+            
+            // Initialize game components
+            initTrack();
+            initBackground();
+            initGameObjects();
+            
+            // Hide game over screen
+            gameOverElement.style.display = 'none';
+        }
+        
+        // Draw everything
+        function draw() {
+            try {
+                // Apply motion blur from previous frame
+                applyMotionBlur();
+                
+                // Clear canvas with partial alpha to create motion trail effect
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw sky and background
+                drawSky();
+                drawBackground();
+                
+                // Draw track
+                drawTrack();
+                
+                // Draw obstacles and coins
+                drawGameObjects();
+                
+                // Draw player
+                player.draw();
+                
+                // Draw particles
+                particles.update(); // Update in the draw loop for smoother motion
+                particles.draw();
+                
+                // Store the current frame for motion blur
+                if (lastFrame) {
+                    const blurCtx = lastFrame.getContext('2d');
+                    blurCtx.clearRect(0, 0, lastFrame.width, lastFrame.height);
+                    blurCtx.drawImage(canvas, 0, 0);
+                }
+            } catch (error) {
+                console.error("Error in main draw function:", error);
+            }
+        }
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            try {
+                if (gameActive) {
+                    // Update game components
+                    player.update();
+                    updateTrack();
+                    updateBackground();
+                    updateGameObjects();
+                    updateStats();
+                }
+                
+                // Draw everything
+                draw();
+                
+                // Continue game loop
+                requestAnimationFrame(gameLoop);
+            } catch (error) {
+                console.error("Error in game loop:", error);
+            }
+        }
+        
+        // Polyfill for roundRect if not supported
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                if (width < 2 * radius) radius = width / 2;
+                if (height < 2 * radius) radius = height / 2;
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.arcTo(x + width, y, x + width, y + height, radius);
+                this.arcTo(x + width, y + height, x, y + height, radius);
+                this.arcTo(x, y + height, x, y, radius);
+                this.arcTo(x, y, x + width, y, radius);
+                this.closePath();
+                return this;
+            };
+        }
+        
+        // Update coins and obstacles with particle effects
+        let prevGameObjects = [];
+        let originalUpdate = GameObject.prototype.update;
+        
+        GameObject.prototype.update = function() {
+            // Check for collection or collision
+            const wasActive = !this.collected && this.z > 0;
+            const result = originalUpdate.call(this);
+            
+            // If the object was just collected or hit, create particles
+            if (wasActive && this.collected) {
+                if (this.type === 'coin') {
+                    // Gold particles for coin collection
+                    particles.addParticles(
+                        player.x, 
+                        player.y - player.height/2, 
+                        15, 
+                        '#f1c40f', 
+                        5, 
+                        4
+                    );
+                }
+            } else if (wasActive && this.z < 10 && this.lane === player.lane && !player.jumping && this.type === 'obstacle') {
+                // Dust particles for obstacle hit
+                particles.addParticles(
+                    player.x, 
+                    player.y - 10, 
+                    20, 
+                    '#95a5a6', 
+                    6, 
+                    3
+                );
+            }
+            
+            return result;
+        };
+        
+        // Add jump and movement particles to player
+        let originalJump = player.jump;
+        player.jump = function() {
+            const wasJumping = this.jumping;
+            originalJump.call(this);
+            
+            if (!wasJumping && this.jumping) {
+                // Dust particles for jump
+                particles.addParticles(
+                    this.x, 
+                    groundY, 
+                    10, 
+                    '#7f8c8d', 
+                    4, 
+                    2
+                );
+            }
+        };
+        
+        // Initialize game components
+        function initGame() {
+            console.log("Initializing game components");
+            
+            // Add roundRect polyfill for browsers that don't support it
+            if (!CanvasRenderingContext2D.prototype.roundRect) {
+                console.log("Adding roundRect polyfill");
+            }
+            
+            initTrack();
+            initBackground();
+            initGameObjects();
+            
+            // Draw once before starting game loop
+            draw();
+            
+            // Start game loop after a short delay
+            setTimeout(() => {
+                console.log("Starting game loop");
+                loadingMessageElement.style.display = 'none'; // Hide loading message
+                gameActive = true; // Ensure game is active
+                requestAnimationFrame(gameLoop);
+            }, 1000);
+        }
+        
+        // Make sure currentQuestionCard is properly initialized
+        let currentQuestionCard = null;
+        
+        // EVENT LISTENERS
+        // Touch controls
+        const leftBtn = document.getElementById('left-btn');
+        const rightBtn = document.getElementById('right-btn');
+        const jumpBtn = document.getElementById('jump-btn');
+        const restartBtn = document.getElementById('restart-button');
+        
+        leftBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            player.moveLeft();
+        });
+        
+        rightBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            player.moveRight();
+        });
+        
+        jumpBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            player.jump();
+        });
+        
+        // Mouse controls for desktop
+        leftBtn.addEventListener('click', function() {
+            player.moveLeft();
+        });
+        
+        rightBtn.addEventListener('click', function() {
+            player.moveRight();
+        });
+        
+        jumpBtn.addEventListener('click', function() {
+            player.jump();
+        });
+        
+        // Keyboard controls
+        document.addEventListener('keydown', function(e) {
+            if (!gameActive) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    player.moveLeft();
+                    break;
+                case 'ArrowRight':
+                    player.moveRight();
+                    break;
+                case 'ArrowUp':
+                case ' ': // Space bar
+                    player.jump();
+                    break;
+            }
+        });
+        
+        // Swipe controls for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        canvas.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        canvas.addEventListener('touchend', function(e) {
+            if (!gameActive) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchStartY - touchEndY;
+            
+            // Determine if it was a swipe
+            if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10) {
+                return; // Not a swipe - just a tap
+            }
+            
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Horizontal swipe
+                if (diffX > 50) {
+                    player.moveRight();
+                } else if (diffX < -50) {
+                    player.moveLeft();
+                }
+            } else {
+                // Vertical swipe
+                if (diffY > 50) {
+                    player.jump();
+                }
+            }
+        }, { passive: true });
+        
+        // Restart button
+        restartBtn.addEventListener('click', function() {
+            restartGame();
+        });
+        
+        // Add particle system for visual effects
+        class ParticleSystem {
+            constructor() {
+                this.particles = [];
+            }
+            
+            addParticles(x, y, count, color, size, speed) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * speed,
+                        vy: (Math.random() - 0.5) * speed,
+                        size: Math.random() * size + 2,
+                        color: color,
+                        alpha: 1,
+                        life: Math.random() * 30 + 20
+                    });
+                }
+            }
+            
+            update() {
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.alpha -= 0.02;
+                    p.life -= 1;
+                    
+                    return p.life > 0 && p.alpha > 0;
+                });
+            }
+            
+            draw() {
+                ctx.save();
+                for (const p of this.particles) {
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+        
+        const particles = new ParticleSystem();
+        
+        // Initialize game when window loads
+        window.addEventListener('load', function() {
+            console.log("Window loaded, calling initGame");
+            // Initial delay to allow DOM to fully load
+            setTimeout(initGame, 500);
+        });
+
+        // Function to check answer - modified to prevent multiple selections
+        function checkAnswer(selectedIndex) {
+            // Only allow answering if the card exists, isn't already showing feedback,
+            // and is close enough to be answerable
+            if (!currentQuestionCard || !questionActive || 
+                currentQuestionCard.showingFeedback || 
+                !currentQuestionCard.answerable) return;
+            
+            const isCorrect = currentQuestionCard.showFeedback(selectedIndex);
+            
+            if (isCorrect) {
+                coins += 5;
+                document.getElementById('coins').textContent = coins;
+                console.log("Correct answer! +5 coins");
+                
+                // Create celebratory particles
+                particles.addParticles(
+                    currentQuestionCard.x,
+                    currentQuestionCard.y + currentQuestionCard.height/2,
+                    20,
+                    '#2ecc71',
+                    6,
+                    5
+                );
+            } else {
+                lives--;
+                document.getElementById('lives').textContent = lives;
+                console.log("Wrong answer! -1 life");
+                
+                // Create error particles
+                particles.addParticles(
+                    currentQuestionCard.x,
+                    currentQuestionCard.y + currentQuestionCard.height/2,
+                    15,
+                    '#e74c3c',
+                    5,
+                    4
+                );
+                
+                if (lives <= 0) {
+                    endGame();
+                }
+            }
+            
+            // Don't immediately reset speed - let the card show feedback first
+            // Original speed will be restored when the question card disappears
+        }
+
+        // Helper function to adjust color brightness
+        function adjustColor(hex, amount) {
+            // Remove # if present
+            hex = hex.replace('#', '');
+            
+            // Convert to RGB
+            let r = parseInt(hex.substring(0, 2), 16);
+            let g = parseInt(hex.substring(2, 4), 16);
+            let b = parseInt(hex.substring(4, 6), 16);
+            
+            // Adjust color
+            r = Math.max(0, Math.min(255, r + amount));
+            g = Math.max(0, Math.min(255, g + amount));
+            b = Math.max(0, Math.min(255, b + amount));
+            
+            // Convert back to hex
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html> 
